@@ -1,0 +1,29 @@
+* {
+    margin: 2.5vw;
+    font-family: Segoe UI, sans-serif;
+}
+#title {
+    font-size: 30px;
+    font-weight: 600;
+}
+
+#serverAddress {
+    font-size: 20px;
+    display: block;
+    border: 1px solid gray;
+    width: 95%;
+}
+
+#pacType {
+    font-size: 15px;
+    border: 1px solid gray;
+}
+
+#startButton {
+    width: 95%;
+    background-color: dodgerblue;
+    border: 1px solid lightskyblue;
+    height: 50px;
+    color: white;
+    font-size: 25px;
+}
