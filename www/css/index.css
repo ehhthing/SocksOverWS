@@ -1,7 +1,10 @@
 * {
-    margin: 2.5vw;
     font-family: Segoe UI, sans-serif;
 }
+#main * {
+    margin: 2.5vw;
+}
+
 #title {
     font-size: 30px;
     font-weight: 600;
@@ -26,4 +29,10 @@
     height: 50px;
     color: white;
     font-size: 25px;
+}
+.center-all {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -100%);
 }

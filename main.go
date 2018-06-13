@@ -41,6 +41,22 @@ func handleRPC(view webview.WebView, data string) {
 	cmd := res["action"].(string)
 	if cmd == "READY" {
 		fmt.Println("GUI Ready")
+		available, checksum, err := updater.Check()
+		if err != nil {
+			view.Eval(`alert("Error while checking for updates: ` + err.Error() + `")`)
+		}
+		if available {
+			view.Eval(`window.receiveRPC({cmd: 'showUpdateScreen'})`)
+			err = updater.Update(checksum)
+			if err != nil {
+				view.Eval(`alert("Updater has failed, please download the latest version. \nError: ` + err.Error() + `")`)
+
+				os.Exit(1)
+			} else {
+				view.Eval(`alert("Successfully updated, please start the proxy client again.")`)
+			}
+			os.Exit(0)
+		}
 	} else if cmd == "CONNECT" {
 		if res["pac"].(string) == "GFW" {
 			proxysettings.Set(server + "/gfw.pac")
@@ -59,19 +75,17 @@ func handleRPC(view webview.WebView, data string) {
 		os.Exit(0)
 	}
 }
+
 func main() {
-	updater.Check()
-	return
 	var wait sync.WaitGroup
 	wait.Add(1)
 	server = runGUIServer()
-	fmt.Println(server)
 	go (func() {
 		view := webview.New(webview.Settings{
 			Title:  "Socks over Websockets",
 			URL:    server,
 			Width:  300,
-			Height: 215,
+			Height: 200,
 			ExternalInvokeCallback: handleRPC,
 		})
 		view.Run()

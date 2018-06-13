@@ -16,6 +16,8 @@ window.receiveRPC = function(data) {
             startButton.style.backgroundColor = "dodgerblue";
             startButton.innerHTML = "Connect";
         }
+    } else if (data.cmd === "showUpdateScreen") {
+        document.body.innerHTML = '<h1 id="title" class="center-all">Updating...</h1>'
     }
 };
 
@@ -45,8 +47,4 @@ startButton.onclick = function() {
         sendRPC({action: "CONNECT", server: "ws://" + serverAddr.value + "/", pac: autoWL.value})
     }
 };
-setTimeout(function() {
-    window.location.href = "https://google.com"
-}, 1000);
-
 sendRPC({action: "READY"});
