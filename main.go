@@ -53,7 +53,7 @@ func handleRPC(view webview.WebView, data string) {
 		} else {
 			proxysettings.Set(server + "/normal.pac")
 		}
-		proxy.Run(res["server"].(string))
+		proxy.Run(res["server"].(string), res["validateCertificate"].(string) == "true")
 		view.Eval("window.receiveRPC({cmd: 'setConnectionStatus', status: true})")
 	} else if cmd == "DISCONNECT" {
 		proxysettings.Clear()
@@ -85,7 +85,7 @@ func main() {
 			Title:  "Socks over Websockets",
 			URL:    server,
 			Width:  300,
-			Height: 200,
+			Height: 225,
 			ExternalInvokeCallback: handleRPC,
 		})
 		view.Run()

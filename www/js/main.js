@@ -1,5 +1,7 @@
 var serverAddr = document.getElementById("serverAddress");
 var autoWL = document.getElementById("pacType");
+var tlsMode = document.getElementById("tls");
+var validateCert = document.getElementById("validateCert");
 var startButton = document.getElementById("startButton");
 var connected = false;
 
@@ -27,9 +29,9 @@ window.receiveRPC = function (data) {
 
 if (localStorage.getItem("server") !== null) {
     serverAddr.value = localStorage.getItem("server");
-}
-if (localStorage.getItem("WL") != null) {
     autoWL.value = localStorage.getItem("WL");
+    tlsMode.checked = localStorage.getItem("TLS") === "true";
+    validateCert.checked = localStorage.getItem("validateCert") === "true";
 }
 
 window.onbeforeunload = function () {
@@ -48,7 +50,20 @@ startButton.onclick = function () {
         startButton.style.backgroundColor = "yellow";
         localStorage.setItem("server", serverAddr.value);
         localStorage.setItem("WL", autoWL.value);
-        sendRPC({action: "CONNECT", server: "ws://" + serverAddr.value + "/", pac: autoWL.value})
+        localStorage.setItem("TLS", tlsMode.checked.toString());
+        localStorage.setItem("validateCert", validateCert.checked.toString());
+        var addr;
+        if (tlsMode.checked) {
+            addr = "wss://" + serverAddr.value + "/";
+        } else {
+            addr = "ws://" + serverAddr.value + "/";
+        }
+        sendRPC({
+            action: "CONNECT",
+            server: addr,
+            pac: autoWL.value,
+            validateCertificate: validateCert.checked.toString()
+        })
     }
 };
 sendRPC({action: "READY"});

@@ -6,12 +6,21 @@ import (
 	"github.com/gorilla/websocket"
 	"io"
 	"errors"
+	"crypto/tls"
 )
-var socks net.Listener
-var http net.Listener
+var socksG net.Listener
+var httpG net.Listener
 var listening = false
-func forward(connection net.Conn, server string, connType string) {
-	wsConnection, _, err := websocket.DefaultDialer.Dial(server + connType, nil)
+func forward(connection net.Conn, server string, connType string, verifyCert bool) {
+	var dialer websocket.Dialer
+	if verifyCert == false {
+		dialer = websocket.Dialer{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+	} else {
+		dialer = websocket.Dialer{}
+	}
+	wsConnection, _, err := dialer.Dial(server + connType, nil)
 	if err != nil {
 		fmt.Println("Connection Error", err)
 		return
@@ -80,7 +89,10 @@ func forward(connection net.Conn, server string, connType string) {
 	}()
 }
 
-func Run(server string) error {
+func Run(server string, verifyCert bool) error {
+	if verifyCert == false {
+		fmt.Println("Not verifying certificate")
+	}
 	listening = true
 	socksServer, err := net.Listen("tcp", "localhost:3000")
 	if err != nil {
@@ -88,8 +100,8 @@ func Run(server string) error {
 	}
 
 	httpServer, err := net.Listen("tcp", "localhost:3001")
-	http = httpServer
-	socks = socksServer
+	httpG = httpServer
+	socksG = socksServer
 	if err != nil {
 		return errors.New("Failed to open http proxy port " + err.Error())
 	}
@@ -100,7 +112,7 @@ func Run(server string) error {
 				return
 			}
 			connection, _ := socksServer.Accept()
-			go forward(connection, server, "socks")
+			go forward(connection, server, "socks", verifyCert)
 		}
 	})()
 	go (func() {
@@ -110,7 +122,7 @@ func Run(server string) error {
 				return
 			}
 			connection, _ := httpServer.Accept()
-			go forward(connection, server, "http")
+			go forward(connection, server, "http", verifyCert)
 		}
 	})()
 	return nil
@@ -118,6 +130,6 @@ func Run(server string) error {
 
 func Stop() {
 	listening = false
-	socks.Close()
-	http.Close()
+	socksG.Close()
+	httpG.Close()
 }
