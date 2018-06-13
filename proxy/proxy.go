@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"io"
+	"errors"
 )
 var socks net.Listener
 var http net.Listener
@@ -79,18 +80,18 @@ func forward(connection net.Conn, server string, connType string) {
 	}()
 }
 
-func Run(server string) {
+func Run(server string) error {
 	listening = true
 	socksServer, err := net.Listen("tcp", "localhost:3000")
 	if err != nil {
-		fmt.Println("Failed to create server", err)
+		return errors.New("Failed to open socks port " + err.Error())
 	}
 
 	httpServer, err := net.Listen("tcp", "localhost:3001")
 	http = httpServer
 	socks = socksServer
 	if err != nil {
-		fmt.Println("Failed to create server", err)
+		return errors.New("Failed to open http proxy port " + err.Error())
 	}
 	go (func() {
 		defer socksServer.Close()
@@ -112,6 +113,7 @@ func Run(server string) {
 			go forward(connection, server, "http")
 		}
 	})()
+	return nil
 }
 
 func Stop() {

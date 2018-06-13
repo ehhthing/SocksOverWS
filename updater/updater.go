@@ -10,7 +10,6 @@ import (
 	"encoding/hex"
 	"math/big"
 	"errors"
-
 	"github.com/inconshreveable/go-update"
 )
 
@@ -18,12 +17,10 @@ const (
 	updaterURL = "https://c.netlify.com/latest.version"
 	signatureURL = "https://c.netlify.com/signature.json"
 	latestVersionURL = "https://c.netlify.com/latest.exe"
-	currentVersion = "alphax1"
+	currentVersion = "alpha-a"
 	publicKey = "-----BEGIN PUBLIC KEY-----\nMIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQAAL3kxinRmcZ/mfGZXJakT/J+GwMF zRUW6IA36BiT10xgTt9nhK2GvXADL9goAqO5c7UnoQhb08d61+K2sH7WHkUBCmUJ\nk7v83YRymbemymHdXcMsoVJZ8UxXP1cduuxxCONlO2GDKg5lyB/sDZ56hWkhXIah\nm1NaajeU3j+mHOuo0E4=\n-----END PUBLIC KEY-----"
 	securityBreachError = "failed to parse verification data, this is likely a security breach. email contact@larry.science about this"
 )
-
-
 
 type verificationData struct {
 	R string
@@ -49,7 +46,7 @@ func Check() (bool, []byte, error) {
 	if err != nil {
 		return false, []byte{}, errors.New("failed to check for updates, do you have internet?" + err.Error())
 	}
-	if latestVersion == currentVersion {
+	if latestVersion == currentVersion + "\n" {
 		return false, []byte{}, nil
 	}
 	signatureData, err := getHTTP(signatureURL)

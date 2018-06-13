@@ -16,16 +16,14 @@ import (
 	"SocksOverWS/updater"
 )
 var server string
-
+var checksum []byte
 func runGUIServer() string {
 	static, err := fs.New()
 	if err != nil {
-		fmt.Println(err)
 		os.Exit(1)
 	}
 	listener, err := net.Listen("tcp", "0.0.0.0:0")
 	if err != nil {
-		fmt.Println(err)
 		os.Exit(1)
 	}
 	http.Handle("/", http.FileServer(static))
@@ -41,21 +39,13 @@ func handleRPC(view webview.WebView, data string) {
 	cmd := res["action"].(string)
 	if cmd == "READY" {
 		fmt.Println("GUI Ready")
-		available, checksum, err := updater.Check()
+		available, sum, err := updater.Check()
+		checksum = sum
 		if err != nil {
 			view.Eval(`alert("Error while checking for updates: ` + err.Error() + `")`)
 		}
 		if available {
-			view.Eval(`window.receiveRPC({cmd: 'showUpdateScreen'})`)
-			err = updater.Update(checksum)
-			if err != nil {
-				view.Eval(`alert("Updater has failed, please download the latest version. \nError: ` + err.Error() + `")`)
-
-				os.Exit(1)
-			} else {
-				view.Eval(`alert("Successfully updated, please start the proxy client again.")`)
-			}
-			os.Exit(0)
+			view.Eval(`window.receiveRPC({cmd: 'showUpdatePrompt'})`)
 		}
 	} else if cmd == "CONNECT" {
 		if res["pac"].(string) == "GFW" {
@@ -73,6 +63,16 @@ func handleRPC(view webview.WebView, data string) {
 		fmt.Println("Page Hijacked!")
 		proxysettings.Clear()
 		os.Exit(0)
+	} else if cmd == "UPDATE" {
+		view.Eval(`window.receiveRPC({cmd: 'showUpdateScreen'})`)
+		err := updater.Update(checksum)
+		if err != nil {
+			view.Eval(`alert("Updater has failed, please download the latest version. \nError: ` + err.Error() + `")`)
+			os.Exit(1)
+		} else {
+			view.Eval(`alert("Successfully updated, please start the proxy client again.")`)
+			os.Exit(0)
+		}
 	}
 }
 
@@ -81,7 +81,7 @@ func main() {
 	wait.Add(1)
 	server = runGUIServer()
 	go (func() {
-		view := webview.New(webview.Settings{
+		view := webview.New(webview.Settings {
 			Title:  "Socks over Websockets",
 			URL:    server,
 			Width:  300,
