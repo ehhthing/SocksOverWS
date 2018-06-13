@@ -65,14 +65,16 @@ func handleRPC(view webview.WebView, data string) {
 		os.Exit(0)
 	} else if cmd == "UPDATE" {
 		view.Eval(`window.receiveRPC({cmd: 'showUpdateScreen'})`)
-		err := updater.Update(checksum)
-		if err != nil {
-			view.Eval(`alert("Updater has failed, please download the latest version. \nError: ` + err.Error() + `")`)
-			os.Exit(1)
-		} else {
-			view.Eval(`alert("Successfully updated, please start the proxy client again.")`)
-			os.Exit(0)
-		}
+		go func() {
+			err := updater.Update(checksum)
+			if err != nil {
+				view.Eval(`alert("Updater has failed, please download the latest version. \nError: ` + err.Error() + `")`)
+				os.Exit(1)
+			} else {
+				view.Eval(`alert("Successfully updated, please start the proxy client again.")`)
+				os.Exit(0)
+			}
+		}()
 	}
 }
 
