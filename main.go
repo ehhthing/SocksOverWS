@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"sync"
 	"SocksOverWS/proxy"
+	"SocksOverWS/updater"
 )
 var server string
 
@@ -59,6 +60,8 @@ func handleRPC(view webview.WebView, data string) {
 	}
 }
 func main() {
+	updater.Check()
+	return
 	var wait sync.WaitGroup
 	wait.Add(1)
 	server = runGUIServer()
