@@ -3,11 +3,13 @@ var autoWL = document.getElementById("pacType");
 var tlsMode = document.getElementById("tls");
 var validateCert = document.getElementById("validateCert");
 var startButton = document.getElementById("startButton");
+var encryptionType = document.getElementById("encryptionType");
 var connected = false;
 
 window.sendRPC = function (data) {
     window.external.invoke(JSON.stringify(data))
 };
+
 window.receiveRPC = function (data) {
     if (data.cmd === "setConnectionStatus") {
         connected = data.status;
@@ -26,13 +28,11 @@ window.receiveRPC = function (data) {
         }
     }
 };
+window.sendLine = function(s) {
+    window.open("https://www.w3schools.com");
+    alert(s);
+};
 
-if (localStorage.getItem("server") !== null) {
-    serverAddr.value = localStorage.getItem("server");
-    autoWL.value = localStorage.getItem("WL");
-    tlsMode.checked = localStorage.getItem("TLS") === "true";
-    validateCert.checked = localStorage.getItem("validateCert") === "true";
-}
 
 window.onbeforeunload = function () {
     alert("It appears that some kind of malware has hijacked this page, the program will now exit.");
@@ -52,18 +52,36 @@ startButton.onclick = function () {
         localStorage.setItem("WL", autoWL.value);
         localStorage.setItem("TLS", tlsMode.checked.toString());
         localStorage.setItem("validateCert", validateCert.checked.toString());
+        localStorage.setItem("encryptionType", encryptionType.value);
         var addr;
         if (tlsMode.checked) {
-            addr = "wss://" + serverAddr.value + "/";
+            addr = "wss://" + serverAddr.value + "/socksproxy";
         } else {
-            addr = "ws://" + serverAddr.value + "/";
+            addr = "ws://" + serverAddr.value + "/socksproxy";
         }
         sendRPC({
             action: "CONNECT",
             server: addr,
             pac: autoWL.value,
-            validateCertificate: validateCert.checked.toString()
+            validateCertificate: validateCert.checked.toString(),
+            encryptionType: encryptionType.value,
+            bypassType: "NONE"
         })
     }
 };
+
+tlsMode.onchange = function() {
+    encryptionType.hidden = !tlsMode.checked;
+};
+
+if (localStorage.getItem("server") !== null) {
+    serverAddr.value = localStorage.getItem("server");
+    autoWL.value = localStorage.getItem("WL");
+    tlsMode.checked = localStorage.getItem("TLS") === "true";
+    encryptionType.hidden = !tlsMode.checked;
+    encryptionType.value = localStorage.getItem("encryptionType");
+    validateCert.checked = localStorage.getItem("validateCert") === "true";
+}
+
+
 sendRPC({action: "READY"});

@@ -10,13 +10,19 @@
     <h1 id="title">Proxy Settings</h1>
     <input id="serverAddress" placeholder="Server Address">
     <select id="pacType">
-        <option value="">Auto Whitelist Type</option>
+        <option value="">Whitelist</option>
         <option value="GFW">Great Firewall</option>
         <option value="NONE">None</option>
     </select>
     <br>
     <label>Encryption:</label><input id="tls" type="checkbox">
     <label>Validate Cert:</label><input id="validateCert" type="checkbox">
+    <br>
+    <select id="encryptionType" hidden>
+        <option value="">Encryption Type</option>
+        <option value="aes128">AES-128 GCM</option>
+        <option value="chacha20">CHACHA20 POLY1305</option>
+    </select>
     <button id="startButton">Start</button>
 </div>
 </body>

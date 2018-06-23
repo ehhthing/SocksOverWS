@@ -2,27 +2,36 @@ package proxy
 
 import (
 	"net"
-	"fmt"
 	"github.com/gorilla/websocket"
 	"io"
 	"errors"
 	"crypto/tls"
+	"log"
+	"SocksOverWS/proxyconfig"
+	"fmt"
 )
-var socksG net.Listener
-var httpG net.Listener
+
+var socksListener net.Listener
+var configuration proxyconfig.ProxyConfig
+var TLSConfig tls.Config
 var listening = false
-func forward(connection net.Conn, server string, connType string, verifyCert bool) {
+
+func randomhost(t string) string {
+	return "hlol.wwww"
+}
+
+func forward(connection net.Conn) {
 	var dialer websocket.Dialer
-	if verifyCert == false {
-		dialer = websocket.Dialer{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
-	} else {
-		dialer = websocket.Dialer{}
+	dialer = websocket.Dialer{
+		TLSClientConfig: &TLSConfig,
 	}
-	wsConnection, _, err := dialer.Dial(server + connType, nil)
+	fmt.Println(dialer.TLSClientConfig)
+	if configuration.BypassType == "GFW" {
+		dialer.TLSClientConfig.ServerName = randomhost(configuration.BypassType)
+	}
+	wsConnection, _, err := dialer.Dial(configuration.Addr, nil)
 	if err != nil {
-		fmt.Println("Connection Error", err)
+		log.Println("Connection Error", err)
 		return
 	}
 	go func() {
@@ -38,10 +47,11 @@ func forward(connection net.Conn, server string, connType string, verifyCert boo
 				if websocket.IsCloseError(err) == true {
 					break
 				}
-				if websocket.IsUnexpectedCloseError(err) == true {
+				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) == true {
 					break
 				}
-				fmt.Println("Error while reading from websocket client", err)
+				log.Println(websocket.IsCloseError(err))
+				log.Println("Error while reading from websocket client", err)
 				break
 			}
 			connection.Write(message)
@@ -63,7 +73,7 @@ func forward(connection net.Conn, server string, connType string, verifyCert boo
 			if !listening {
 				break
 			}
-			buf := make([]byte, 1024)
+			buf := make([]byte, 8192)
 
 			count, err := connection.Read(buf)
 			if err != nil {
@@ -89,22 +99,20 @@ func forward(connection net.Conn, server string, connType string, verifyCert boo
 	}()
 }
 
-func Run(server string, verifyCert bool) error {
-	if verifyCert == false {
-		fmt.Println("Not verifying certificate")
+func Run(config proxyconfig.ProxyConfig) error {
+	TLSConfig.InsecureSkipVerify = !config.ValidateCert
+	if config.EncryptionType == "aes128" {
+		TLSConfig.CipherSuites = []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256}
+	} else if config.EncryptionType == "chacha20" {
+		TLSConfig.CipherSuites = []uint16{tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305}
 	}
-	listening = true
+	configuration = config
 	socksServer, err := net.Listen("tcp", "localhost:3000")
 	if err != nil {
 		return errors.New("Failed to open socks port " + err.Error())
 	}
-
-	httpServer, err := net.Listen("tcp", "localhost:3001")
-	httpG = httpServer
-	socksG = socksServer
-	if err != nil {
-		return errors.New("Failed to open http proxy port " + err.Error())
-	}
+	listening = true
+	socksListener = socksServer
 	go (func() {
 		defer socksServer.Close()
 		for {
@@ -112,17 +120,7 @@ func Run(server string, verifyCert bool) error {
 				return
 			}
 			connection, _ := socksServer.Accept()
-			go forward(connection, server, "socks", verifyCert)
-		}
-	})()
-	go (func() {
-		defer httpServer.Close()
-		for {
-			if !listening {
-				return
-			}
-			connection, _ := httpServer.Accept()
-			go forward(connection, server, "http", verifyCert)
+			go forward(connection)
 		}
 	})()
 	return nil
@@ -130,6 +128,5 @@ func Run(server string, verifyCert bool) error {
 
 func Stop() {
 	listening = false
-	socksG.Close()
-	httpG.Close()
+	socksListener.Close()
 }

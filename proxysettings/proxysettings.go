@@ -1,6 +1,5 @@
 package proxysettings
 
-import "C"
 //#cgo LDFLAGS: -lwininet
 //#include <stdlib.h>
 //#include <windef.h>

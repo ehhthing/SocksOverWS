@@ -6,5 +6,5 @@ function FindProxyForURL(url, host) {
         isInNet(dnsResolve(host), "192.168.0.0",  "255.255.0.0") ||
         isInNet(dnsResolve(host), "127.0.0.0", "255.255.255.0"))
         return "DIRECT";
-    return "SOCKS5 127.0.0.1:3000; HTTP 127.0.0.1:3001";
+    return "SOCKS5 127.0.0.1:3000";
 }

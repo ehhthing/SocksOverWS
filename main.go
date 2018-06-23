@@ -3,7 +3,6 @@ package main
 import (
 	"net"
 	"os"
-	"fmt"
 	"github.com/zserge/webview"
 	"github.com/rakyll/statik/fs"
 	"net/http"
@@ -14,9 +13,13 @@ import (
 	"sync"
 	"SocksOverWS/proxy"
 	"SocksOverWS/updater"
+	"log"
+	"SocksOverWS/proxyconfig"
 )
+
 var server string
 var checksum []byte
+
 func runGUIServer() string {
 	static, err := fs.New()
 	if err != nil {
@@ -38,7 +41,7 @@ func handleRPC(view webview.WebView, data string) {
 	json.Unmarshal([]byte(data), &res)
 	cmd := res["action"].(string)
 	if cmd == "READY" {
-		fmt.Println("GUI Ready")
+		log.Println("GUI Ready")
 		available, sum, err := updater.Check()
 		checksum = sum
 		if err != nil {
@@ -53,14 +56,19 @@ func handleRPC(view webview.WebView, data string) {
 		} else {
 			proxysettings.Set(server + "/normal.pac")
 		}
-		proxy.Run(res["server"].(string), res["validateCertificate"].(string) == "true")
+		proxy.Run(proxyconfig.ProxyConfig{
+			Addr:           res["server"].(string),
+			ValidateCert:   res["validateCertificate"].(string) == "true",
+			EncryptionType: res["encryptionType"].(string),
+			BypassType:     res["bypassType"].(string),
+		})
 		view.Eval("window.receiveRPC({cmd: 'setConnectionStatus', status: true})")
 	} else if cmd == "DISCONNECT" {
 		proxysettings.Clear()
 		proxy.Stop()
 		view.Eval("window.receiveRPC({cmd: 'setConnectionStatus', status: false})")
 	} else if cmd == "PAGECHANGE" {
-		fmt.Println("Page Hijacked!")
+		log.Println("Page Hijacked!")
 		proxysettings.Clear()
 		os.Exit(0)
 	} else if cmd == "UPDATE" {
@@ -83,11 +91,11 @@ func main() {
 	wait.Add(1)
 	server = runGUIServer()
 	go (func() {
-		view := webview.New(webview.Settings {
-			Title:  "Socks over Websockets",
-			URL:    server,
-			Width:  300,
-			Height: 225,
+		view := webview.New(webview.Settings{
+			Title:                  "Socks over Websockets",
+			URL:                    server,
+			Width:                  290,
+			Height:                 200,
 			ExternalInvokeCallback: handleRPC,
 		})
 		view.Run()
