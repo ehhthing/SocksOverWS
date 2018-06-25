@@ -4,6 +4,8 @@ var tlsMode = document.getElementById("tls");
 var validateCert = document.getElementById("validateCert");
 var startButton = document.getElementById("startButton");
 var encryptionType = document.getElementById("encryptionType");
+var encryptionOnly = document.getElementById("encryptionOnly");
+var bypassMode = document.getElementById("bypassMode");
 var connected = false;
 
 window.sendRPC = function (data) {
@@ -53,6 +55,7 @@ startButton.onclick = function () {
         localStorage.setItem("TLS", tlsMode.checked.toString());
         localStorage.setItem("validateCert", validateCert.checked.toString());
         localStorage.setItem("encryptionType", encryptionType.value);
+        localStorage.setItem("bypassMode", bypassMode.value);
         var addr;
         if (tlsMode.checked) {
             addr = "wss://" + serverAddr.value + "/socksproxy";
@@ -65,22 +68,23 @@ startButton.onclick = function () {
             pac: autoWL.value,
             validateCertificate: validateCert.checked.toString(),
             encryptionType: encryptionType.value,
-            bypassType: "NONE"
+            bypassType: bypassMode.value
         })
     }
 };
 
 tlsMode.onchange = function() {
-    encryptionType.hidden = !tlsMode.checked;
+    encryptionOnly.hidden = !tlsMode.checked;
 };
 
 if (localStorage.getItem("server") !== null) {
     serverAddr.value = localStorage.getItem("server");
     autoWL.value = localStorage.getItem("WL");
     tlsMode.checked = localStorage.getItem("TLS") === "true";
-    encryptionType.hidden = !tlsMode.checked;
     encryptionType.value = localStorage.getItem("encryptionType");
     validateCert.checked = localStorage.getItem("validateCert") === "true";
+    bypassMode.value = localStorage.getItem("bypassMode")
+    encryptionOnly.hidden = !tlsMode.checked;
 }
 
 

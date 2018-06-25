@@ -14,15 +14,25 @@
         <option value="GFW">Great Firewall</option>
         <option value="NONE">None</option>
     </select>
+
     <br>
     <label>Encryption:</label><input id="tls" type="checkbox">
     <label>Validate Cert:</label><input id="validateCert" type="checkbox">
     <br>
-    <select id="encryptionType" hidden>
-        <option value="">Encryption Type</option>
-        <option value="aes128">AES-128 GCM</option>
-        <option value="chacha20">CHACHA20 POLY1305</option>
-    </select>
+    <span id="encryptionOnly" hidden>
+        <select id="encryptionType">
+            <option value="">Encryption Type</option>
+            <option value="aes128">AES-128 GCM</option>
+            <option value="chacha20">CHACHA20 POLY1305</option>
+            <option value="">ANY</option>
+        </select>
+         <select id="bypassMode">
+            <option value="">Bypass Mode</option>
+            <option value="GFW">Great Firewall</option>
+            <option value="RANDOM">Random</option>
+            <option value="NONE">None</option>
+        </select>
+    </span>
     <button id="startButton">Start</button>
 </div>
 </body>

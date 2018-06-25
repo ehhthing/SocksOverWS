@@ -8,7 +8,10 @@ import (
 	"crypto/tls"
 	"log"
 	"SocksOverWS/proxyconfig"
-	"fmt"
+	"encoding/hex"
+	"math/rand"
+	"time"
+	"strings"
 )
 
 var socksListener net.Listener
@@ -17,7 +20,15 @@ var TLSConfig tls.Config
 var listening = false
 
 func randomhost(t string) string {
-	return "hlol.wwww"
+	random := rand.New(rand.NewSource(time.Now().UnixNano()))
+	if t == "RANDOM" {
+		domain := make([]byte, 6)
+		rand.Read(domain)
+		return hex.EncodeToString(domain) + ".cn"
+	} else if t == "GFW" {
+		return proxyconfig.GFWHosts[random.Intn(len(proxyconfig.GFWHosts)-1)]
+	}
+	return "" // shouldn't happen
 }
 
 func forward(connection net.Conn) {
@@ -25,8 +36,9 @@ func forward(connection net.Conn) {
 	dialer = websocket.Dialer{
 		TLSClientConfig: &TLSConfig,
 	}
-	fmt.Println(dialer.TLSClientConfig)
 	if configuration.BypassType == "GFW" {
+		dialer.TLSClientConfig.ServerName = randomhost(configuration.BypassType)
+	} else if configuration.BypassType == "RANDOM" {
 		dialer.TLSClientConfig.ServerName = randomhost(configuration.BypassType)
 	}
 	wsConnection, _, err := dialer.Dial(configuration.Addr, nil)
@@ -50,7 +62,9 @@ func forward(connection net.Conn) {
 				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) == true {
 					break
 				}
-				log.Println(websocket.IsCloseError(err))
+				if strings.Contains(err.Error(), "use of closed network connection") {
+					break
+				}
 				log.Println("Error while reading from websocket client", err)
 				break
 			}
@@ -100,6 +114,7 @@ func forward(connection net.Conn) {
 }
 
 func Run(config proxyconfig.ProxyConfig) error {
+
 	TLSConfig.InsecureSkipVerify = !config.ValidateCert
 	if config.EncryptionType == "aes128" {
 		TLSConfig.CipherSuites = []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256}
