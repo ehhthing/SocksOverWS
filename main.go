@@ -67,8 +67,7 @@ func handleRPC(view webview.WebView, data string) {
 		proxysettings.Clear()
 		proxy.Stop()
 		view.Eval("window.receiveRPC({cmd: 'setConnectionStatus', status: false})")
-	} else if cmd == "PAGECHANGE" {
-		log.Println("Page Hijacked!")
+	} else if cmd == "EXIT" {
 		proxysettings.Clear()
 		os.Exit(0)
 	} else if cmd == "UPDATE" {
