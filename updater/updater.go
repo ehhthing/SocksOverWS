@@ -27,9 +27,11 @@ type verificationData struct {
 	S string
 	Sum string
 }
+
 type latestVersionResponse struct {
 	Version string
 }
+
 func getHTTP (url string) (string, error) {
 	res, err := http.Get(url)
 	if err != nil {
