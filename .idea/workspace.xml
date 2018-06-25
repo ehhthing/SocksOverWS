@@ -306,7 +306,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Go Build.Run">
+  <component name="RunManager" selected="Go Build.Build for Release">
     <configuration name="Build for Release" type="GoApplicationRunConfiguration" factoryName="Go Application">
       <module name="SocksOverWS" />
       <working_directory value="$PROJECT_DIR$/" />
