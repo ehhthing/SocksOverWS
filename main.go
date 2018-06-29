@@ -13,13 +13,14 @@ import (
 	"sync"
 	"SocksOverWS/proxy"
 	"SocksOverWS/updater"
-	"log"
 	"SocksOverWS/proxyconfig"
+	"log"
+	"os/exec"
 )
 
 var server string
 var checksum []byte
-
+var view webview.WebView
 func runGUIServer() string {
 	static, err := fs.New()
 	if err != nil {
@@ -41,7 +42,6 @@ func handleRPC(view webview.WebView, data string) {
 	json.Unmarshal([]byte(data), &res)
 	cmd := res["action"].(string)
 	if cmd == "READY" {
-		log.Println("GUI Ready")
 		available, sum, err := updater.Check()
 		checksum = sum
 		if err != nil {
@@ -82,6 +82,8 @@ func handleRPC(view webview.WebView, data string) {
 				os.Exit(0)
 			}
 		}()
+	} else if cmd == "SHOW_LOG" {
+		exec.Command("cmd","/C", "start", "powershell", "-Command", "Get-Content", "logs.log", "-Wait", "-Tail", "30").Run()
 	}
 }
 
@@ -90,8 +92,8 @@ func main() {
 	wait.Add(1)
 	server = runGUIServer()
 	go (func() {
-		view := webview.New(webview.Settings{
-			Title:                  "Socks over Websockets",
+		view = webview.New(webview.Settings{
+			Title:                  "Proxy Settings",
 			URL:                    server,
 			Width:                  290,
 			Height:                 200,
@@ -101,5 +103,12 @@ func main() {
 		proxysettings.Clear()
 		wait.Done()
 	})()
+	os.Remove("logs.log")
+	logFile, err := os.OpenFile("logs.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer logFile.Close()
+	log.SetOutput(logFile)
 	wait.Wait()
 }

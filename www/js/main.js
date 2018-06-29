@@ -6,6 +6,7 @@ var startButton = document.getElementById("startButton");
 var encryptionType = document.getElementById("encryptionType");
 var encryptionOnly = document.getElementById("encryptionOnly");
 var bypassMode = document.getElementById("bypassMode");
+var showLogs = document.getElementById("showLogs");
 var connected = false;
 
 window.sendRPC = function (data) {
@@ -28,6 +29,8 @@ window.receiveRPC = function (data) {
         if (confirm("A newer version is available, would you like to update?")) {
             window.sendRPC({action: "UPDATE"})
         }
+    } else if (data.cmd === "log") {
+        alert(data.data)
     }
 };
 window.sendLine = function(s) {
@@ -72,11 +75,20 @@ startButton.onclick = function () {
         })
     }
 };
+showLogs.onclick = function() {
+    window.sendRPC({action: "SHOW_LOG"})
+};
 
 tlsMode.onchange = function() {
     encryptionOnly.hidden = !tlsMode.checked;
 };
-
+validateCert.onchange = function() {
+    if (validateCert.checked === false) {
+        return bypassMode.hidden = false;
+    }
+    bypassMode.value = "";
+    bypassMode.hidden = true;
+};
 if (localStorage.getItem("server") !== null) {
     serverAddr.value = localStorage.getItem("server");
     autoWL.value = localStorage.getItem("WL");

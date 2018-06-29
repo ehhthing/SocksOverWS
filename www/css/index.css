@@ -2,6 +2,7 @@
     font-family: Segoe UI, sans-serif;
     margin: 0;
 }
+
 #main {
     margin: 1.75vw;
 }
@@ -21,6 +22,7 @@
     border: 1px solid gray;
     width: 95%;
 }
+
 select {
     font-size: 15px;
     border: 1px solid gray;
@@ -34,17 +36,31 @@ select {
     color: white;
     font-size: 25px;
 }
+
 .center-all {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -100%);
 }
+
 #encryptionType {
     margin: 0;
 }
-body{
+
+body {
     scrollbar-face-color: deepskyblue;
     scrollbar-track-color: dodgerblue;
     scrollbar-arrow-color: deepskyblue;
+}
+
+#showLogs {
+    position: absolute;
+    font-size: 11px;
+    top: 1vw;
+    right: 1vw;
+}
+
+a, a:visited, a:hover, a:active {
+    color: inherit;
 }

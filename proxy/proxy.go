@@ -6,19 +6,18 @@ import (
 	"io"
 	"errors"
 	"crypto/tls"
-	"log"
 	"SocksOverWS/proxyconfig"
 	"encoding/hex"
 	"math/rand"
 	"time"
 	"strings"
+	"log"
 )
 
 var socksListener net.Listener
 var configuration proxyconfig.ProxyConfig
 var TLSConfig tls.Config
 var listening = false
-
 func randomhost(t string) string {
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	if t == "RANDOM" {
@@ -43,7 +42,7 @@ func forward(connection net.Conn) {
 	}
 	wsConnection, _, err := dialer.Dial(configuration.Addr, nil)
 	if err != nil {
-		log.Println("Connection Error", err)
+		log.Println("Connection Error", err.Error())
 		return
 	}
 	go func() {
@@ -65,7 +64,7 @@ func forward(connection net.Conn) {
 				if strings.Contains(err.Error(), "use of closed network connection") {
 					break
 				}
-				log.Println("Error while reading from websocket client", err)
+				log.Println("Error while reading from websocket client", err.Error())
 				break
 			}
 			connection.Write(message)
@@ -114,12 +113,11 @@ func forward(connection net.Conn) {
 }
 
 func Run(config proxyconfig.ProxyConfig) error {
-
 	TLSConfig.InsecureSkipVerify = !config.ValidateCert
 	if config.EncryptionType == "aes128" {
-		TLSConfig.CipherSuites = []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256}
+		TLSConfig.CipherSuites = []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256}
 	} else if config.EncryptionType == "chacha20" {
-		TLSConfig.CipherSuites = []uint16{tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305}
+		TLSConfig.CipherSuites = []uint16{tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305, tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305}
 	}
 	configuration = config
 	socksServer, err := net.Listen("tcp", "localhost:3000")
@@ -129,6 +127,7 @@ func Run(config proxyconfig.ProxyConfig) error {
 	listening = true
 	socksListener = socksServer
 	go (func() {
+		log.Println("Proxy Server Started")
 		defer socksServer.Close()
 		for {
 			if !listening {
