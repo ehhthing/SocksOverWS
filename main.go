@@ -16,6 +16,7 @@ import (
 	"SocksOverWS/proxyconfig"
 	"log"
 	"os/exec"
+	"html"
 )
 
 var server string
@@ -56,13 +57,30 @@ func handleRPC(view webview.WebView, data string) {
 		} else {
 			proxysettings.Set(server + "/normal.pac")
 		}
-		proxy.Run(proxyconfig.ProxyConfig{
+		err := proxy.Run(proxyconfig.ProxyConfig{
 			Addr:           res["server"].(string),
 			ValidateCert:   res["validateCertificate"].(string) == "true",
 			EncryptionType: res["encryptionType"].(string),
 			BypassType:     res["bypassType"].(string),
 		})
-		view.Eval("window.receiveRPC({cmd: 'setConnectionStatus', status: true})")
+		if err != nil {
+			view.Eval("alert('Connection failed," + html.EscapeString(err.Error()) + "')")
+			return
+		}
+		go (func() {
+			log.Println("Testing connection")
+			err = proxy.TestConnection()
+			if err != nil {
+				view.Dispatch(func() {
+					view.Eval("alert('Failed to test connection," + html.EscapeString(err.Error()) + "')")
+					view.Eval("window.receiveRPC({cmd: 'setConnectionStatus', status: false})")
+				})
+				return
+			}
+			view.Dispatch(func() {
+				view.Eval("window.receiveRPC({cmd: 'setConnectionStatus', status: true})")
+			})
+		})()
 	} else if cmd == "DISCONNECT" {
 		proxysettings.Clear()
 		proxy.Stop()

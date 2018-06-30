@@ -8,7 +8,7 @@ var encryptionOnly = document.getElementById("encryptionOnly");
 var bypassMode = document.getElementById("bypassMode");
 var showLogs = document.getElementById("showLogs");
 var connected = false;
-
+var connecting = false;
 window.sendRPC = function (data) {
     window.external.invoke(JSON.stringify(data))
 };
@@ -17,6 +17,7 @@ window.receiveRPC = function (data) {
     if (data.cmd === "setConnectionStatus") {
         connected = data.status;
         if (data.status) {
+            connecting = false;
             startButton.style.backgroundColor = "green";
             startButton.innerHTML = "Connected";
         } else {
@@ -33,11 +34,6 @@ window.receiveRPC = function (data) {
         alert(data.data)
     }
 };
-window.sendLine = function(s) {
-    window.open("https://www.w3schools.com");
-    alert(s);
-};
-
 
 window.onbeforeunload = function () {
     alert("It appears that some kind of malware has hijacked this page, the program will now exit.");
@@ -46,12 +42,14 @@ window.onbeforeunload = function () {
 };
 
 startButton.onclick = function () {
-    if (connected) {
+    if (connected || connecting) {
+        connecting = false;
         startButton.innerHTML = "Disconnecting";
         startButton.style.backgroundColor = "yellow";
         sendRPC({action: "DISCONNECT"})
     } else {
         startButton.innerHTML = "Connecting";
+        connecting = true;
         startButton.style.backgroundColor = "yellow";
         localStorage.setItem("server", serverAddr.value);
         localStorage.setItem("WL", autoWL.value);

@@ -12,12 +12,21 @@ import (
 	"time"
 	"strings"
 	"log"
+	"net/http"
+	"net/url"
+	"sync"
+)
+
+const (
+	socksAddr = "0.0.0.0:3000"
+	testAddr  = "http://clients3.google.com/generate_204"
 )
 
 var socksListener net.Listener
 var configuration proxyconfig.ProxyConfig
 var TLSConfig tls.Config
 var listening = false
+
 func randomhost(t string) string {
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	if t == "RANDOM" {
@@ -111,6 +120,25 @@ func forward(connection net.Conn) {
 		wsConnection = nil
 	}()
 }
+func getProxy(_ *http.Request) (*url.URL, error) {
+	socksURL, err := url.Parse("socks5://" + socksAddr)
+	return socksURL, err
+}
+
+func TestConnection() error {
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			Proxy: getProxy,
+		},
+		Timeout: 5 * time.Second,
+	}
+	req, err := httpClient.Get(testAddr)
+	if err != nil {
+		return err
+	}
+	req.Body.Close()
+	return nil
+}
 
 func Run(config proxyconfig.ProxyConfig) error {
 	TLSConfig.InsecureSkipVerify = !config.ValidateCert
@@ -120,15 +148,17 @@ func Run(config proxyconfig.ProxyConfig) error {
 		TLSConfig.CipherSuites = []uint16{tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305, tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305}
 	}
 	configuration = config
-	socksServer, err := net.Listen("tcp", "localhost:3000")
+	socksServer, err := net.Listen("tcp", socksAddr)
 	if err != nil {
 		return errors.New("Failed to open socks port " + err.Error())
 	}
 	listening = true
 	socksListener = socksServer
+	var serverStarted sync.WaitGroup
+	serverStarted.Add(1)
 	go (func() {
-		log.Println("Proxy Server Started")
 		defer socksServer.Close()
+		serverStarted.Done()
 		for {
 			if !listening {
 				return
@@ -137,6 +167,7 @@ func Run(config proxyconfig.ProxyConfig) error {
 			go forward(connection)
 		}
 	})()
+	serverStarted.Wait()
 	return nil
 }
 
